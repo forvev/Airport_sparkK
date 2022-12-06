@@ -1,0 +1,55 @@
+import org.gradle.internal.os.OperatingSystem
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'war'
+apply from: 'https://raw.github.com/gretty-gradle-plugin/gretty/master/pluginScripts/gretty.plugin'
+
+// DO NOT MODIFY
+
+repositories {
+    mavenCentral()
+    google()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    implementation 'org.apache.spark:spark-core_2.13:3.3.0'
+    implementation 'org.apache.spark:spark-sql_2.13:3.3.0'
+
+    testImplementation 'org.apache.spark:spark-catalyst_2.13:3.3.0'
+
+    implementation 'javax.servlet:javax.servlet-api:4.0.1'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.2'
+}
+
+task runSparkApp(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+
+    main = 'ex.Main'
+}
+
+task runSparkSubmit(type: Exec, dependsOn: jar) {
+    def submitDir = './Spark/bin/spark-submit'
+    if (OperatingSystem.current().isWindows()) {
+        submitDir = '.\\Spark\\bin\\spark-submit.cmd'
+    }
+    executable = submitDir
+    args = [
+        "--class", "ex.Main",
+        "--master", "local",
+        "build/libs/spark_exercise.jar"
+    ]
+}
+
+test {
+    useJUnitPlatform()
+}
