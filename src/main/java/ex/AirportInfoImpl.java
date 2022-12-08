@@ -10,6 +10,9 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.explode;
 
@@ -137,8 +140,11 @@ public class AirportInfoImpl implements AirportInfo {
      */
     @Override
     public Dataset<Flight> flightsOfAirlineWithStatus(Dataset<Flight> flights, String airlineDisplayCode, String status1, String... status) {
-        // TODO: Implement
-        return null;
+        List<String> statuses = new ArrayList<>(status.length + 1);
+        statuses.addAll(List.of(status));
+        statuses.add(status1);
+        return flights.filter((FilterFunction<Flight>) value -> value.getAirlineDisplayCode().equals(airlineDisplayCode)
+                && statuses.contains(value.getFlightStatus()));
     }
 
     /**
