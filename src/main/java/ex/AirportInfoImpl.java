@@ -2,7 +2,6 @@ package ex;
 
 import ex.deserialization.objects.Flight;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
@@ -13,8 +12,8 @@ import scala.Tuple2;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.spark.sql.functions.avg;
 import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.explode;
 
 public class AirportInfoImpl implements AirportInfo {
 
@@ -67,11 +66,11 @@ public class AirportInfoImpl implements AirportInfo {
     public Dataset<Row> mostCommonDestinations(Dataset<Row> departingFlights) {
         var flights =
                 departingFlights.select("flight.arrivalAirport")
-                .filter(
-                    col("arrivalAirport").isNotNull()
-                    .and(col("arrivalAirport").notEqual("")))
-                .groupBy("arrivalAirport").count()
-                .sort(col("count").desc());
+                        .filter(
+                                col("arrivalAirport").isNotNull()
+                                        .and(col("arrivalAirport").notEqual("")))
+                        .groupBy("arrivalAirport").count()
+                        .sort(col("count").desc());
         return flights;
     }
 
@@ -155,15 +154,23 @@ public class AirportInfoImpl implements AirportInfo {
      * empty "scheduledTime" or "originDate" fields. You can assume that lowerLimit is always before or equal
      * to upperLimit.
      *
-     * @param flights Dataset containing the arriving Flight objects
-     * @param lowerLimit     start timestamp (included)
-     * @param upperLimit     end timestamp (included)
+     * @param flights    Dataset containing the arriving Flight objects
+     * @param lowerLimit start timestamp (included)
+     * @param upperLimit end timestamp (included)
      * @return average number of flights between the given timestamps (both included)
      */
     @Override
     public double avgNumberOfFlightsInWindow(Dataset<Flight> flights, String lowerLimit, String upperLimit) {
-        // TODO: Implement
-        return 0.0d;
+        var average = flights.filter((FilterFunction<Flight>) value ->
+                value.getScheduled().length() > 0
+                        && value.getOriginDate().length() > 0)
+                .filter((FilterFunction<Flight>) value ->
+                        isBefore(lowerLimit, getTimeFromDate(value.getScheduled()))
+                                && isBefore(getTimeFromDate(value.getScheduled()), upperLimit))
+                .groupByKey((MapFunction<Flight, String>) v -> v.getOriginDate(), Encoders.STRING()).count()
+                .agg(avg(col("count(1)"))).first().getDouble(0);
+
+        return average;
     }
 
     /**
@@ -185,5 +192,9 @@ public class AirportInfoImpl implements AirportInfo {
         }
 
         return true;
+    }
+
+    private static String getTimeFromDate(String value) {
+        return value.substring(value.indexOf("T")+1, value.length() - 1);
     }
 }

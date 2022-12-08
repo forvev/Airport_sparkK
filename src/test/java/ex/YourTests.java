@@ -53,4 +53,34 @@ public class YourTests {
         }
     }
 
+    @Nested
+    @DisplayName("Task 6")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class Task6 {
+
+        Dataset<Flight> flights;
+
+        @BeforeAll
+        @Timeout(10)
+        void setup() {
+            flights = fput.parseFlights(FLIGHTS_PATH);
+        }
+
+        @Test
+        void test1() {
+            assertEquals(3230d/3d, uut.avgNumberOfFlightsInWindow(flights, "12:00:00", "23:59:59"));
+        }
+
+        @Test
+        void test2() {
+            assertEquals(154d, uut.avgNumberOfFlightsInWindow(flights, "13:00:00", "14:00:00"));
+        }
+
+        @Test
+        void test3() {
+            assertEquals(73d/3d, uut.avgNumberOfFlightsInWindow(flights, "13:09:59", "13:19:59"));
+        }
+
+    }
+
 }
