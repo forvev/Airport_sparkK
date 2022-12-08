@@ -62,8 +62,14 @@ public class AirportInfoImpl implements AirportInfo {
      */
     @Override
     public Dataset<Row> mostCommonDestinations(Dataset<Row> departingFlights) {
-        // TODO: Implement
-        return null;
+        var flights =
+                departingFlights.select("flight.arrivalAirport")
+                .filter(
+                    col("arrivalAirport").isNotNull()
+                    .and(col("arrivalAirport").notEqual("")))
+                .groupBy("arrivalAirport").count()
+                .sort(col("count").desc());
+        return flights;
     }
 
     /**
