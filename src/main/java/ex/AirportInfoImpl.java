@@ -71,6 +71,8 @@ public class AirportInfoImpl implements AirportInfo {
                                         .and(col("arrivalAirport").notEqual("")))
                         .groupBy("arrivalAirport").count()
                         .sort(col("count").desc());
+
+        flights.show(1000);
         return flights;
     }
 
@@ -88,8 +90,17 @@ public class AirportInfoImpl implements AirportInfo {
      */
     @Override
     public Dataset<Row> gatesWithFlightsToBerlin(Dataset<Row> departureFlights) {
-        // TODO: Implement
-        return null;
+        var flights =
+                departureFlights.select("flight.departure.gates.gate")
+                        .where(col("flight.arrivalAirport").$eq$eq$eq("BER"))
+                        .filter(col("gate").isNotNull())
+                        .groupBy("gate").count()
+                        .sort(col("count").desc()
+                        );
+
+
+        flights.show(false);
+        return flights;
     }
 
     /**
