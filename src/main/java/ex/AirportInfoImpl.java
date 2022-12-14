@@ -71,7 +71,6 @@ public class AirportInfoImpl implements AirportInfo {
                         .groupBy("arrivalAirport").count()
                         .sort(col("count").desc());
 
-        flights.show(1000);
         return flights;
     }
 
