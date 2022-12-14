@@ -4,13 +4,13 @@ import ex.deserialization.objects.Flight;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static org.apache.spark.sql.functions.avg;
 import static org.apache.spark.sql.functions.col;
@@ -118,8 +118,23 @@ public class AirportInfoImpl implements AirportInfo {
      */
     @Override
     public JavaPairRDD<String, Long> aircraftCountOnDate(Dataset<Row> flights, String originDate) {
-        // TODO: Implement
-        return null;
+
+        var flight = flights.select("flight.aircraftType.modelName")
+                .where(col("flight.originDate").$eq$eq$eq(originDate))
+                .filter(col("modelName").isNotNull())
+                .filter(col("modelName").notEqual(""))
+                .groupBy("modelName").count()
+                .sort(col("count").desc());
+
+        JavaPairRDD<String, Long> flight_javaPairRDD = flight.toJavaRDD().mapToPair(row -> {
+            return new Tuple2<String, Long>(row.getString(0), row.getLong(1));
+        });
+
+        flight.show(false);
+        flight_javaPairRDD.foreach(data -> {
+            System.out.println("Model: "+data._1+"\nNumber of flights: "+data._2);
+        } );
+        return flight_javaPairRDD;
     }
 
     /**
@@ -133,7 +148,26 @@ public class AirportInfoImpl implements AirportInfo {
      */
     @Override
     public String ryanairStrike(Dataset<Row> flights) {
-        // TODO: Implement
+        String temporary;
+
+//        var flight = flights.select("flight.flightStatus")
+//                .filter(col("flightStatus").isNotNull())
+//                .groupBy("flightStatus").count()
+//                .sort(col("count").desc()).;
+
+        //TODO: is this assumption of "C" correct?
+//        var flight1 = flights.select("flight.flightStatus")
+//                .filter(col("flightStatus").$eq$eq$eq("C"))
+//                .groupBy("flightStatus").count()
+//                .sort(col("count").desc());
+
+        Set <String> my_set = new HashSet<>();
+
+        var flight1 = flights.select("flight.originDate")
+                .where(col("flight.flightStatus").$eq$eq$eq(""))
+                .where(col("flight.operatingAirline.name").$eq$eq$eq("Lufthansa")).toString();
+
+        System.out.println(flight1);
         return null;
     }
 
