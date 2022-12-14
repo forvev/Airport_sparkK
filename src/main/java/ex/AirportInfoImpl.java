@@ -12,8 +12,7 @@ import scala.Tuple2;
 
 import java.util.*;
 
-import static org.apache.spark.sql.functions.avg;
-import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.*;
 
 public class AirportInfoImpl implements AirportInfo {
 
@@ -91,9 +90,11 @@ public class AirportInfoImpl implements AirportInfo {
     @Override
     public Dataset<Row> gatesWithFlightsToBerlin(Dataset<Row> departureFlights) {
         var flights =
-                departureFlights.select("flight.departure.gates.gate")
-                        .where(col("flight.arrivalAirport").$eq$eq$eq("BER"))
+                departureFlights.select(concat_ws("",col("flight.departure.gates.gate")).alias("gate"))
+                        .where(col("flight.arrivalAirport").equalTo("TXL")
+                                .or(col("flight.arrivalAirport").equalTo("SXF")))
                         .filter(col("gate").isNotNull())
+                        .filter(col("gate").notEqual(""))
                         .groupBy("gate").count()
                         .sort(col("count").desc()
                         );
@@ -154,7 +155,7 @@ public class AirportInfoImpl implements AirportInfo {
         //C - canceled
         var flight1 = flights.select("flight.originDate")
                 .where(col("flight.flightStatus").$eq$eq$eq("C"))
-                .where(col("flight.operatingAirline.name").$eq$eq$eq("Lufthansa"));
+                .where(col("flight.operatingAirline.name").$eq$eq$eq("Ryanair"));
 
         my_list = flight1.as(Encoders.STRING()).collectAsList();
 
@@ -164,8 +165,8 @@ public class AirportInfoImpl implements AirportInfo {
 
         System.out.println("my set: "+str);
         flight1.show(false);
-        //System.out.println(flight1);
-        return null;
+
+        return str;
     }
 
     /**
