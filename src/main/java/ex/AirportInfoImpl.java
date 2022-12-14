@@ -148,26 +148,23 @@ public class AirportInfoImpl implements AirportInfo {
      */
     @Override
     public String ryanairStrike(Dataset<Row> flights) {
-        String temporary;
+        //I assume that input might consist of many days(e.g. in one json file there are different days), so therefore we create the list
+        List <String> my_list = new ArrayList<>();
 
-//        var flight = flights.select("flight.flightStatus")
-//                .filter(col("flightStatus").isNotNull())
-//                .groupBy("flightStatus").count()
-//                .sort(col("count").desc()).;
-
-        //TODO: is this assumption of "C" correct?
-//        var flight1 = flights.select("flight.flightStatus")
-//                .filter(col("flightStatus").$eq$eq$eq("C"))
-//                .groupBy("flightStatus").count()
-//                .sort(col("count").desc());
-
-        Set <String> my_set = new HashSet<>();
-
+        //C - canceled
         var flight1 = flights.select("flight.originDate")
-                .where(col("flight.flightStatus").$eq$eq$eq(""))
-                .where(col("flight.operatingAirline.name").$eq$eq$eq("Lufthansa")).toString();
+                .where(col("flight.flightStatus").$eq$eq$eq("C"))
+                .where(col("flight.operatingAirline.name").$eq$eq$eq("Lufthansa"));
 
-        System.out.println(flight1);
+        my_list = flight1.as(Encoders.STRING()).collectAsList();
+
+
+        Set<String> my_set1 = new HashSet<>(my_list);
+        String str = String.join(",", my_set1);
+
+        System.out.println("my set: "+str);
+        flight1.show(false);
+        //System.out.println(flight1);
         return null;
     }
 
